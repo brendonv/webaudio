@@ -1,0 +1,126 @@
+<html>
+	<head>
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans:300' rel='stylesheet' type='text/css'>
+
+    <style>
+      *{font-family:'Open Sans', sans-serif;font-weight:lighter;}
+    </style>
+	</head>
+	<body>
+    <h1>Web Audio Test</h1>
+
+    <div>
+      <label for="vol">Volume</label>
+      <input id="vol" type="range" oninput="inputChange('vlm', this.value)"></input>
+    </div>
+    <div>
+      <label for="frq">Frequency</label>
+      <input id="frq" type="range" oninput="inputChange('frq', this.value)"></input>
+    </div>
+    <div>
+      <label for="qty">Quality</label>
+      <input id="qty" type="range" oninput="inputChange('qty', this.value)"></input>
+    </div>
+    <div>
+      <label for="filter">Filter</label>
+      <input id="filter" type="checkbox" onchange="toggleFilter(this)" checked></input>
+    </div>
+    <div>
+      <select name="filters" onchange="filterChange()">
+        <option name="lowpass">lowpass</option>
+        <option name="highpass">highpass</option>
+        <option name="bandpass">bandpass</option>
+        <option name="lowshelf">lowshelf</option>
+        <option name="highshelf">highshelf</option>
+        <option name="peaking">peaking</option>
+        <option name="notch">notch</option>
+        <option name="allpass">allpass</option>
+      </select>
+    </div>
+
+    <script>
+      var ctx,
+          src,
+          gain, 
+          sBuff,
+          filter,
+          URL = "https://www.freesound.org/data/previews/265/265512_2421344-lq.mp3";
+      window.addEventListener("load", init, false);
+
+      function init() {
+        window.AudioContext = window.AudioContext || window.webkitAudioContext;
+        ctx = new AudioContext();
+        ftr = document.getElementsByName('filters')[0];
+        loadSound(URL);
+      }
+
+      function inputChange(type, i) {
+        switch (type) {
+          case "vlm":
+            gain.gain.value = i * .01;
+            break;
+          case "frq":
+            var minValue = 40;
+            var maxValue = ctx.sampleRate / 2;
+            // Logarithm (base 2) to compute how many octaves fall in the range.
+            var numberOfOctaves = Math.log(maxValue / minValue) / Math.LN2;
+            // Compute a multiplier from 0 to 1 based on an exponential scale.
+            var multiplier = Math.pow(2, numberOfOctaves * (i - 1.0));
+            // Get back to the frequency value between min and max.
+            console.log(maxValue * multiplier);
+            filter.frequency.value = maxValue * multiplier;
+            break;
+          case "qty":
+            break;
+        }
+      }
+
+      function toggleFilter(e) {
+        src.disconnect(0);
+        filter.disconnect(0);
+        if (e.checked) {
+          src.connect(filter);
+          filter.connect(gain);
+          gain.connect(ctx.destination);
+        } else {
+          src.connect(gain);
+          gain.connect(ctx.destination);
+        }
+      }
+
+      function filterChange() {
+        filter.type = ftr.options[ftr.selectedIndex].value;
+      }
+
+      function playSound(buffer) {
+        src = ctx.createBufferSource(); //creates sound source
+        src.loop = true;
+        gain = ctx.createGain();
+        filter = ctx.createBiquadFilter();
+        src.connect(filter)
+        src.buffer = buffer; //give sound to context
+        filter.connect(gain);
+        // src.connect(ctx.destination);
+        gain.connect(ctx.destination);
+        src.start(0);
+      }
+
+      function loadSound(url) {
+        var req = new XMLHttpRequest;
+        req.open('GET', url, true);
+        req.responseType = 'arraybuffer';
+
+        //Decode async
+        req.onload = function() {
+          ctx.decodeAudioData(req.response, function(buffer) {
+            sBuff = buffer;
+            playSound(buffer);
+          });
+        }
+
+        req.send();
+      }
+
+    </script>
+	</body>
+</html>
