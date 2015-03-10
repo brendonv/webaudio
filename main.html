@@ -11,22 +11,22 @@
 
     <div>
       <label for="vol">Volume</label>
-      <input id="vol" type="range" oninput="inputChange('vlm', this.value)"></input>
+      <input id="vol" type="range" oninput="audioMagic.inputChange('vlm', this.value)"></input>
     </div>
     <div>
       <label for="frq">Frequency</label>
-      <input id="frq" type="range" oninput="inputChange('frq', this.value)"></input>
+      <input id="frq" type="range" oninput="audioMagic.inputChange('frq', this.value)"></input>
     </div>
     <div>
       <label for="qty">Quality</label>
-      <input id="qty" type="range" oninput="inputChange('qty', this.value)"></input>
+      <input id="qty" type="range" oninput="audioMagic.inputChange('qty', this.value)"></input>
     </div>
     <div>
       <label for="filter">Filter</label>
-      <input id="filter" type="checkbox" onchange="toggleFilter(this)" checked></input>
+      <input id="filter" type="checkbox" onchange="audioMagic.toggleFilter(this)" checked></input>
     </div>
     <div>
-      <select name="filters" onchange="filterChange()">
+      <select name="filters" onchange="audioMagic.filterChange()">
         <option name="lowpass">lowpass</option>
         <option name="highpass">highpass</option>
         <option name="bandpass">bandpass</option>
@@ -39,6 +39,10 @@
     </div>
 
     <script>
+
+    (function(window, document, undefined) {
+    console.log("IIFE");
+      var api = window.audioMagic = window.audioMagic || {};
       var ctx,
           src,
           gain, 
@@ -48,13 +52,14 @@
       window.addEventListener("load", init, false);
 
       function init() {
+        console.log("INIT");
         window.AudioContext = window.AudioContext || window.webkitAudioContext;
         ctx = new AudioContext();
         ftr = document.getElementsByName('filters')[0];
         loadSound(URL);
       }
 
-      function inputChange(type, i) {
+      api.inputChange = function(type, i) {
         switch (type) {
           case "vlm":
             gain.gain.value = i * .01;
@@ -75,7 +80,7 @@
         }
       }
 
-      function toggleFilter(e) {
+      api.toggleFilter = function(e) {
         src.disconnect(0);
         filter.disconnect(0);
         if (e.checked) {
@@ -88,7 +93,7 @@
         }
       }
 
-      function filterChange() {
+      api.filterChange = function() {
         filter.type = ftr.options[ftr.selectedIndex].value;
       }
 
@@ -120,6 +125,7 @@
 
         req.send();
       }
+    })(window, document);
 
     </script>
 	</body>
